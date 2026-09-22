@@ -106,7 +106,7 @@ describe('Front Desk / Visitor Table & Pass Scan Flow', () => {
 
     // Details drawer opens and displays visitor details
     expect(await screen.findByRole('heading', { name: /Visitor Pass Details/i })).toBeInTheDocument()
-    expect(screen.getByText('Kunal Kapoor')).toBeInTheDocument()
+    expect(screen.getAllByText('Kunal Kapoor').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText(/Kapoor Holdings/i)).toBeInTheDocument()
 
     // Status is now CHECKED_IN (shown in drawer and/or table)

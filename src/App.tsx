@@ -8,6 +8,7 @@ import { InvitePage } from './pages/InvitePage'
 import { AdminPage } from './pages/AdminPage'
 import { useEffect, useState } from 'react'
 import { Drawer } from './components/ui/Drawer'
+import { NotificationFeed } from './features/approvals/NotificationFeed'
 
 const ROLES: { key: Role; label: string; path: string }[] = [
   { key: 'FRONT_DESK', label: 'Front Desk', path: '/desk' },
@@ -21,8 +22,6 @@ function Header() {
   const navigate = useNavigate()
   const unreadCount = useNotificationsStore((s) => s.unreadCount)
   const refresh = useNotificationsStore((s) => s.refresh)
-  const notifications = useNotificationsStore((s) => s.items)
-  const markRead = useNotificationsStore((s) => s.markRead)
   const [bellOpen, setBellOpen] = useState(false)
 
   // Refresh notifications periodically
@@ -68,7 +67,11 @@ function Header() {
 
               {/* Notification bell */}
               <button
-                onClick={() => { refresh(); setBellOpen(true) }}
+                type="button"
+                onClick={() => {
+                  refresh()
+                  setBellOpen(true)
+                }}
                 className="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
                 aria-label="Notifications"
               >
@@ -88,35 +91,7 @@ function Header() {
 
       {/* Notification Drawer */}
       <Drawer open={bellOpen} onClose={() => setBellOpen(false)} title="Notifications">
-        {notifications.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-8">No notifications yet.</p>
-        ) : (
-          <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-            {notifications.slice(0, 50).map((n) => (
-              <li
-                key={n.id}
-                className={`py-3 px-1 text-sm ${n.read ? 'text-gray-400' : 'text-gray-800 dark:text-gray-200'}`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <p className={`truncate ${!n.read ? 'font-medium' : ''}`}>{n.message}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {n.channel} · {new Date(n.at).toLocaleTimeString()}
-                    </p>
-                  </div>
-                  {!n.read && (
-                    <button
-                      onClick={() => markRead(n.id)}
-                      className="text-xs text-indigo-500 hover:text-indigo-700 shrink-0"
-                    >
-                      Mark read
-                    </button>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+        <NotificationFeed />
       </Drawer>
     </>
   )

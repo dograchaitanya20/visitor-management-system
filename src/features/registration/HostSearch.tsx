@@ -20,18 +20,18 @@ export function HostSearch({ value, onChange, error }: HostSearchProps) {
 
   // Resolve initial value to a display name on mount / when value changes externally
   useEffect(() => {
-    if (!value) {
-      setSelectedName('')
-      return
-    }
-    // If we already have a name for this value, keep it
-    if (selectedName) return
-    // Look it up
+    if (!value) return
+    let active = true
     searchEmployees(value).then((emps) => {
-      const match = emps.find((e) => e.id === value)
-      if (match) setSelectedName(`${match.name} — ${match.dept}`)
+      if (active) {
+        const match = emps.find((e) => e.id === value)
+        if (match) setSelectedName(`${match.name} — ${match.dept}`)
+      }
     })
-  }, [value, selectedName])
+    return () => {
+      active = false
+    }
+  }, [value])
 
   const doSearch = useCallback((q: string) => {
     if (timerRef.current) clearTimeout(timerRef.current)
@@ -93,7 +93,7 @@ export function HostSearch({ value, onChange, error }: HostSearchProps) {
         Host Employee <span className="text-red-500">*</span>
       </label>
 
-      {selectedName ? (
+      {value && selectedName ? (
         <div className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-sm">
           <span className="flex-1 text-gray-900 dark:text-gray-100">{selectedName}</span>
           <button

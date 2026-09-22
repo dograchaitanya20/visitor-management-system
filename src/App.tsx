@@ -1,122 +1,141 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { useSessionStore, type Role } from './store/session'
+import { useNotificationsStore } from './store/notifications'
+import { Toaster } from './components/ui/Toaster'
+import { DeskPage } from './pages/DeskPage'
+import { HostPage } from './pages/HostPage'
+import { InvitePage } from './pages/InvitePage'
+import { AdminPage } from './pages/AdminPage'
+import { useEffect, useState } from 'react'
+import { Drawer } from './components/ui/Drawer'
 
-function App() {
-  const [count, setCount] = useState(0)
+const ROLES: { key: Role; label: string; path: string }[] = [
+  { key: 'FRONT_DESK', label: 'Front Desk', path: '/desk' },
+  { key: 'HOST', label: 'Host', path: '/host' },
+  { key: 'ADMIN', label: 'Admin', path: '/admin' },
+]
+
+function Header() {
+  const role = useSessionStore((s) => s.role)
+  const setRole = useSessionStore((s) => s.setRole)
+  const navigate = useNavigate()
+  const unreadCount = useNotificationsStore((s) => s.unreadCount)
+  const refresh = useNotificationsStore((s) => s.refresh)
+  const notifications = useNotificationsStore((s) => s.items)
+  const markRead = useNotificationsStore((s) => s.markRead)
+  const [bellOpen, setBellOpen] = useState(false)
+
+  // Refresh notifications periodically
+  useEffect(() => {
+    refresh()
+    const id = setInterval(refresh, 5000)
+    return () => clearInterval(id)
+  }, [refresh])
+
+  const switchRole = (r: typeof ROLES[number]) => {
+    setRole(r.key)
+    navigate(r.path)
+  }
 
   return (
     <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14">
+            {/* App title */}
+            <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100 whitespace-nowrap">
+              🏢 VMS
+            </h1>
 
-      <div className="ticks"></div>
+            {/* Right side: role switcher + bell */}
+            <div className="flex items-center gap-3">
+              {/* Role switcher */}
+              <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
+                {ROLES.map((r) => (
+                  <button
+                    key={r.key}
+                    onClick={() => switchRole(r)}
+                    className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${
+                      role === r.key
+                        ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                    }`}
+                  >
+                    {r.label}
+                  </button>
+                ))}
+              </div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
+              {/* Notification bell */}
+              <button
+                onClick={() => { refresh(); setBellOpen(true) }}
+                className="relative p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                aria-label="Notifications"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-500 rounded-full">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Notification Drawer */}
+      <Drawer open={bellOpen} onClose={() => setBellOpen(false)} title="Notifications">
+        {notifications.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-8">No notifications yet.</p>
+        ) : (
+          <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+            {notifications.slice(0, 50).map((n) => (
+              <li
+                key={n.id}
+                className={`py-3 px-1 text-sm ${n.read ? 'text-gray-400' : 'text-gray-800 dark:text-gray-200'}`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className={`truncate ${!n.read ? 'font-medium' : ''}`}>{n.message}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {n.channel} · {new Date(n.at).toLocaleTimeString()}
+                    </p>
+                  </div>
+                  {!n.read && (
+                    <button
+                      onClick={() => markRead(n.id)}
+                      className="text-xs text-indigo-500 hover:text-indigo-700 shrink-0"
+                    >
+                      Mark read
+                    </button>
+                  )}
+                </div>
+              </li>
+            ))}
           </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+        )}
+      </Drawer>
     </>
   )
 }
 
-export default App
+export default function App() {
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <Header />
+      <main className="max-w-7xl mx-auto">
+        <Routes>
+          <Route path="/desk" element={<DeskPage />} />
+          <Route path="/host" element={<HostPage />} />
+          <Route path="/invite" element={<InvitePage />} />
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="*" element={<Navigate to="/desk" replace />} />
+        </Routes>
+      </main>
+      <Toaster />
+    </div>
+  )
+}

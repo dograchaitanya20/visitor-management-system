@@ -15,12 +15,14 @@ export function RegistrationForm() {
   const [successInfo, setSuccessInfo] = useState<{ name: string; visitId: string } | null>(null)
   const [visitTypes, setVisitTypes] = useState<string[]>([])
   const [offices, setOffices] = useState<string[]>([])
+  const [settingsLoaded, setSettingsLoaded] = useState(false)
 
   const {
     register,
     handleSubmit,
     control,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<RegistrationFormData>({
     resolver: zodResolver(registrationSchema),
@@ -31,17 +33,22 @@ export function RegistrationForm() {
       purpose: '',
       hostId: '',
       company: '',
+      visitType: '',
+      office: '',
       photo: '',
     },
   })
 
-  // Load visit types and offices from settings
+  // Load visit types and offices from settings, then default to first option
   useEffect(() => {
     getSettings().then((s) => {
       setVisitTypes(s.visitTypes)
       setOffices(s.offices)
+      if (s.visitTypes.length > 0) setValue('visitType', s.visitTypes[0])
+      if (s.offices.length > 0) setValue('office', s.offices[0])
+      setSettingsLoaded(true)
     })
-  }, [])
+  }, [setValue])
 
   const onSubmit = async (data: RegistrationFormData) => {
     setSubmitting(true)
@@ -55,8 +62,8 @@ export function RegistrationForm() {
         photo: data.photo,
         hostId: data.hostId,
         purpose: data.purpose,
-        type: visitTypes[0] || 'Others', // default to first type; a proper select would be added later
-        office: offices[0] || 'Mumbai Goregaon',
+        type: data.visitType,
+        office: data.office,
       })
       setSuccessInfo({ name: data.name, visitId: visit.id })
       reset()
@@ -157,6 +164,50 @@ export function RegistrationForm() {
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
           />
           {errors.purpose && <p className="mt-1 text-xs text-red-500">{errors.purpose.message}</p>}
+        </div>
+
+        {/* Visit Type + Office row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Visit Type <span className="text-red-500">*</span>
+            </label>
+            {!settingsLoaded ? (
+              <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-sm text-gray-400 animate-pulse">
+                Loading…
+              </div>
+            ) : (
+              <select
+                {...register('visitType')}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+              >
+                {visitTypes.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            )}
+            {errors.visitType && <p className="mt-1 text-xs text-red-500">{errors.visitType.message}</p>}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Office <span className="text-red-500">*</span>
+            </label>
+            {!settingsLoaded ? (
+              <div className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-sm text-gray-400 animate-pulse">
+                Loading…
+              </div>
+            ) : (
+              <select
+                {...register('office')}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+              >
+                {offices.map((o) => (
+                  <option key={o} value={o}>{o}</option>
+                ))}
+              </select>
+            )}
+            {errors.office && <p className="mt-1 text-xs text-red-500">{errors.office.message}</p>}
+          </div>
         </div>
 
         {/* Host employee search */}

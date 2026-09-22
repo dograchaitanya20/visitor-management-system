@@ -14,6 +14,8 @@ export const registrationSchema = z.object({
   purpose: z.string().min(1, 'Purpose is required').max(200),
   hostId: z.string().min(1, 'Please select a host employee'),
   company: z.string(),
+  visitType: z.string().min(1, 'Visit type is required'),
+  office: z.string().min(1, 'Office is required'),
   photo: z.string().min(1, 'Photo is required'),
 })
 

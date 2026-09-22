@@ -3,6 +3,7 @@ import type { Visit, Status } from '../domain/types'
 import { effectiveStatus } from '../domain/rules'
 import type { EffectiveStatus } from '../domain/types'
 import * as repo from '../api/repo'
+import type { CreateWalkInInput } from '../api/repo'
 import { addToast } from './toast'
 
 export interface VisitFilters {
@@ -21,6 +22,7 @@ interface VisitsState {
   resetFilters: () => void
   fetchVisits: () => Promise<void>
   applyEvent: (visitId: string, event: import('../domain/types').VisitEvent, by: string) => Promise<void>
+  registerWalkIn: (input: CreateWalkInInput) => Promise<Visit>
 }
 
 const DEFAULT_FILTERS: VisitFilters = {
@@ -65,6 +67,14 @@ export const useVisitsStore = create<VisitsState>()((set, get) => ({
       const msg = err instanceof Error ? err.message : `Failed to ${event}`
       addToast(msg, 'error')
     }
+  },
+
+  registerWalkIn: async (input) => {
+    const visit = await repo.createWalkIn(input)
+    addToast('Visitor registered — host has been notified', 'success')
+    // Refresh list in background (don't block the return)
+    get().fetchVisits()
+    return visit
   },
 }))
 

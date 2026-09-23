@@ -3,6 +3,7 @@
 A full-featured, frontend-only Visitor Management System built for the MoveInSync campus case study (Case Study 1). It covers walk-in registration, host approval workflows, QR-code pre-approval invites, front-desk check-in/out, and system administration — all backed by a strongly-typed domain model and a mock API layer designed to mirror how a real backend would behave.
 
 **Live demo:** https://visitor-management-system-ten-rho.vercel.app
+
 **Repository:** https://github.com/dograchaitanya20/visitor-management-system
 
 ---

@@ -83,33 +83,35 @@ npm run build        # production build
 
 The codebase is layered so that UI, business rules, and data access never bleed into each other:
 
+```
 src/
-├─ domain/ Pure business logic — no React, no I/O, fully unit-testable
-│ ├─ types.ts Core types: Visit, Visitor, Employee, Settings, AuditEvent
-│ ├─ stateMachine.ts The single source of truth for legal status transitions
-│ └─ rules.ts effectiveStatus, checkPass, canPreApprove, validateWindow
+├─ domain/         Pure business logic — no React, no I/O, fully unit-testable
+│  ├─ types.ts         Core types: Visit, Visitor, Employee, Settings, AuditEvent
+│  ├─ stateMachine.ts  The single source of truth for legal status transitions
+│  └─ rules.ts         effectiveStatus, checkPass, canPreApprove, validateWindow
 │
-├─ api/ Mock backend — simulates a real API's contract
-│ ├─ repo.ts CRUD + business operations, in-memory indexes, persistence
-│ ├─ notifier.ts In-memory notification log (email/SMS/push simulation)
-│ ├─ seed.ts Deterministic seed data + high-volume generator
-│ └─ errors.ts Typed AppError with specific error codes
+├─ api/            Mock backend — simulates a real API's contract
+│  ├─ repo.ts          CRUD + business operations, in-memory indexes, persistence
+│  ├─ notifier.ts      In-memory notification log (email/SMS/push simulation)
+│  ├─ seed.ts          Deterministic seed data + high-volume generator
+│  └─ errors.ts        Typed AppError with specific error codes
 │
-├─ store/ Zustand stores — the only layer allowed to call src/api/
-│ ├─ session.ts Current role + acting employee (persisted to sessionStorage)
-│ ├─ visits.ts Visit list, filters, loading/error state
-│ ├─ notifications.ts Notification feed
-│ └─ toast.ts Global toast queue
+├─ store/          Zustand stores — the only layer allowed to call src/api/
+│  ├─ session.ts       Current role + acting employee (persisted to sessionStorage)
+│  ├─ visits.ts        Visit list, filters, loading/error state
+│  ├─ notifications.ts Notification feed
+│  └─ toast.ts         Global toast queue
 │
-├─ features/ One folder per screen, composed from store + domain + ui
-│ ├─ registration/ Walk-in form, host search, photo capture
-│ ├─ approvals/ Host inbox, notification feed
-│ ├─ invite/ Pre-approval form, guest picker
-│ ├─ frontdesk/ Visitor table, details drawer, pass scan
-│ └─ admin/ Settings, audit log, demo data tools
+├─ features/       One folder per screen, composed from store + domain + ui
+│  ├─ registration/    Walk-in form, host search, photo capture
+│  ├─ approvals/       Host inbox, notification feed
+│  ├─ invite/          Pre-approval form, guest picker
+│  ├─ frontdesk/       Visitor table, details drawer, pass scan
+│  └─ admin/           Settings, audit log, demo data tools
 │
-├─ components/ui/ Shared, reusable primitives (Badge, Drawer, Modal, Toast, Table)
-└─ pages/ One route component per screen, composing the features above
+├─ components/ui/  Shared, reusable primitives (Badge, Drawer, Modal, Toast, Table)
+└─ pages/          One route component per screen, composing the features above
+```
 
 
 **Why this separation matters:** `src/domain/` has zero dependencies on React or any storage mechanism — it's tested in isolation (28 tests) and is the *only* place that decides whether a status transition is legal. Every layer above it — the mock API, the stores, the UI — defers to it rather than re-implementing the rules. This is also what makes the mock API layer a drop-in replacement target: swap `src/api/repo.ts`'s internals for real HTTP calls, and nothing in `domain/`, `store/`, or `features/` needs to change.
